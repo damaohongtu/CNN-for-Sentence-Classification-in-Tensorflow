@@ -1,4 +1,4 @@
-# Convolutional Neural Networks for Sentence Classification(Yoon Kim)
+# Convolutional Neural Networks for Sentence Classification (Yoon Kim)
 ## 1.模型架构
 - 论文模型
 ![](pictures/model_architecture.png)
@@ -20,3 +20,6 @@ tensorboard --logdir=runs/1530857879
 | CNN-static |  |  |  |  |  |  |  |
 | CNN-non-static |  |  |  |  |  |  |  |
 | CNN-multichannel |  |  |  |  |  |  |  |
+
+## 3.使用GPU训练模型
+## 4.讲模型扩展

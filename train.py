@@ -5,6 +5,7 @@ import time
 import datetime
 import util.data_helpers
 from text_cnn import TextCNN
+import gensim
 from tensorflow.contrib import learn
 
 # Parameters
@@ -18,8 +19,11 @@ tf.flags.DEFINE_string ("positive_data_file", "./data/raw_data/rt-polaritydata/r
 # 负样本
 tf.flags.DEFINE_string ("negative_data_file", "./data/raw_data/rt-polaritydata/rt-polarity.neg",
                         "Data source for the negative data.")
+# word2vec 模型（google news）
+tf.flags.DEFINE_string("googlenews-vectors-negative","./data/processed-data/GoogleNews-vectors-negative300.bin",
+                       "GoogleNews-vectors-negative300.bin")
 
-# Model Hyperparameters
+# Model Hyperparameters，embedding的维数128维
 tf.flags.DEFINE_integer ("embedding_dim", 128, "Dimensionality of character embedding (default: 128)")
 tf.flags.DEFINE_string ("filter_sizes", "3,4,5", "Comma-separated filter sizes (default: '3,4,5')")
 
@@ -41,12 +45,6 @@ tf.flags.DEFINE_boolean ("log_device_placement", False, "Log placement of ops on
 FLAGS = tf.flags.FLAGS
 
 
-# FLAGS._parse_flags()
-# print("\nParameters:")
-# for attr, value in sorted(FLAGS.__flags.items()):
-#     print("{}={}".format(attr.upper(), value))
-# print("")
-
 def preprocess ():
 	# Data Preparation
 	# ==================================================
@@ -57,9 +55,12 @@ def preprocess ():
 	x_text, y = util.data_helpers.load_data_and_labels (FLAGS.positive_data_file, FLAGS.negative_data_file)
 
 	# Build vocabulary
-	max_document_length = max ([len (x.split (" ")) for x in x_text])
+	max_document_length = max ([len (x.split (" ")) for x in x_text])#句子最大的长度，每一个为本使用56维向量表示
+
 	vocab_processor = learn.preprocessing.VocabularyProcessor (max_document_length)
 
+	# 先生成list，然后转为numpy array
+	# (10662, 56):10662是文本的数目（行数），每一行使用56维向量表示
 	x = np.array (list (vocab_processor.fit_transform (x_text)))
 
 	# Randomly shuffle data
@@ -185,9 +186,8 @@ def train (x_train, y_train, vocab_processor, x_dev, y_dev):
 				if writer:
 					writer.add_summary (summaries, step)
 
-			# Generate batches
-			batches = util.data_helpers.batch_iter (
-				list (zip (x_train, y_train)), FLAGS.batch_size, FLAGS.num_epochs)
+			# 产生batch数据作为输入
+			batches = util.data_helpers.batch_iter(list (zip (x_train, y_train)), FLAGS.batch_size, FLAGS.num_epochs)
 
 			# Training loop. For each batch...
 			for batch in batches:
@@ -202,11 +202,9 @@ def train (x_train, y_train, vocab_processor, x_dev, y_dev):
 					path = saver.save (sess, checkpoint_prefix, global_step=current_step)
 					print ("Saved model checkpoint to {}\n".format (path))
 
-
 def main (argv=None):
 	x_train, y_train, vocab_processor, x_dev, y_dev = preprocess ()
 	train (x_train, y_train, vocab_processor, x_dev, y_dev)
-
 
 if __name__ == '__main__':
 	tf.app.run ()

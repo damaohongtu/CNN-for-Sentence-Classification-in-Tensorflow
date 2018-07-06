@@ -1,0 +1,2 @@
+# 使用word2vec
+pip install genism

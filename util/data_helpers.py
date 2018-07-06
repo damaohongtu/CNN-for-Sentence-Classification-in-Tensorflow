@@ -25,6 +25,8 @@ def clean_str(string):
     return string.strip().lower()
 
 
+
+
 def load_data_and_labels(positive_data_file, negative_data_file):
     """
     Loads MR polarity data from files, splits the data into words and generates labels.

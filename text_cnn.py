@@ -21,10 +21,11 @@ class TextCNN(object):
 
         # Embedding layer
         with tf.device('/cpu:0'), tf.name_scope("embedding"):
-            self.W = tf.Variable(
-                tf.random_uniform([vocab_size, embedding_size], -1.0, 1.0),
-                name="W")
+            # 初始化使用[-1,1]的均匀分布进行初始化（w变量是二维）
+            self.W = tf.Variable(tf.random_uniform([vocab_size, embedding_size], -1.0, 1.0),name="W")
+            # 使用embedding 将input_x(10062x56)转换维(10062x56x128)，tf.nn.embedding_lookup
             self.embedded_chars = tf.nn.embedding_lookup(self.W, self.input_x)
+            # 将(10062x56x128)扩展一维为(10062x56x128x1)，最后一维使用-1则会自适应
             self.embedded_chars_expanded = tf.expand_dims(self.embedded_chars, -1)
 
         # Create a convolution + maxpool layer for each filter size
@@ -32,13 +33,13 @@ class TextCNN(object):
         for i, filter_size in enumerate(filter_sizes):
             with tf.name_scope("conv-maxpool-%s" % filter_size):
                 # Convolution Layer
-                # 定义卷积的形状，由三个参数构成
+                # 定义卷积的形状
                 filter_shape = [filter_size, embedding_size, 1, num_filters]
-                W = tf.Variable(tf.truncated_normal(filter_shape, stddev=0.1), name="W")
-                b = tf.Variable(tf.constant(0.1, shape=[num_filters]), name="b")
+                W = tf.Variable(tf.truncated_normal(filter_shape, stddev=0.1), name="W")#使用随机变量进行初始化
+                b = tf.Variable(tf.constant(0.1, shape=[num_filters]), name="b")#偏置项，每一个卷积对应一个偏置
                 conv = tf.nn.conv2d(
-                    self.embedded_chars_expanded,
-                    W,
+                    self.embedded_chars_expanded,#[batch, in_height, in_width, in_channels]
+                    W,#卷积核：[filter_height, filter_width, in_channels, out_channels]
                     strides=[1, 1, 1, 1],
                     padding="VALID",
                     name="conv")
@@ -74,7 +75,7 @@ class TextCNN(object):
             self.scores = tf.nn.xw_plus_b(self.h_drop, W, b, name="scores")
             self.predictions = tf.argmax(self.scores, 1, name="predictions")
 
-        # Calculate mean cross-entropy loss
+        # 使用交叉熵定义损失函数
         with tf.name_scope("loss"):
             losses = tf.nn.softmax_cross_entropy_with_logits(logits=self.scores, labels=self.input_y)
             self.loss = tf.reduce_mean(losses) + l2_reg_lambda * l2_loss
