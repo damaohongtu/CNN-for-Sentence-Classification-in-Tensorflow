@@ -9,7 +9,9 @@ tensorboard --logdir=runs/1530857879
 ## 2.实验
 ### 2.1 词向量
 - tf.contrib.learn.preprocessing.VocabularyProcessor
-- 使用word2vec
+- 使用word2vec<br>
+改进后的网络结构如下：输入的每一个样本是一个56*300的向量
+![](pictures/net_structure_2.png)
 ### 2.2 使用多个通道
 方案：使用word2vec
 ### 2.3 在六个数据集上进行实验
