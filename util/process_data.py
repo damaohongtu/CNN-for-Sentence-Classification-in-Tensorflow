@@ -20,6 +20,7 @@ def doc_to_vec():
 		temp = np.zeros (shape=[max_sentence_size, word_size])
 		count=0
 		for word in sentence.split(" "):
+			# 跳过不在词表中的词，对于不在词表中的词可以使用增量式训练对词向量进行更新
 			try:
 				temp[count]=googlenews[word]
 			except	KeyError:

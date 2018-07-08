@@ -24,4 +24,18 @@ tensorboard --logdir=runs/1530857879
 | CNN-multichannel |  |  |  |  |  |  |  |
 
 ## 3.使用GPU训练模型
-## 4.讲模型扩展
+## 4.模型扩展
+### 4.1 Word2Vec的增量训练
+
+目的：避免把全部的训练语料一次性载入到内存中。另一个原因是为了应对语料随时增加的情况。
+
+### 4.2<a href="http://spark.apache.org/docs/latest/api/java/org/apache/spark/mllib/feature/Word2Vec.html">Word2Vec的分布式训练（基于spark mllib）</a>
+
+
+
+### 4.3 Word2Vec用于中文数据(分布式训练)
+
+### 参考：
+[1] <a href="https://radimrehurek.com/gensim/models/word2vec.html">gensim word2vec</a><br/>
+[2] <a href="">word2vec的分布式训练</a><br/>
+[3] <a href="https://www.jianshu.com/p/6d542ff65b1e">word2vec中文训练</a>
