@@ -5,9 +5,9 @@ import time
 import datetime
 import util.data_helpers
 from text_cnn import TextCNN
-import gensim
 from tensorflow.contrib import learn
-
+from util.file_path import filepath
+import util.process_data
 # Parameters
 # ==================================================
 
@@ -20,11 +20,13 @@ tf.flags.DEFINE_string ("positive_data_file", "./data/raw_data/rt-polaritydata/r
 tf.flags.DEFINE_string ("negative_data_file", "./data/raw_data/rt-polaritydata/rt-polarity.neg",
                         "Data source for the negative data.")
 # word2vec 模型（google news）
-tf.flags.DEFINE_string("googlenews-vectors-negative","./data/processed-data/GoogleNews-vectors-negative300.bin",
+tf.flags.DEFINE_string("googlenews_vectors_negative","./data/processed-data/GoogleNews-vectors-negative300.bin",
                        "GoogleNews-vectors-negative300.bin")
 
 # Model Hyperparameters，embedding的维数128维
-tf.flags.DEFINE_integer ("embedding_dim", 128, "Dimensionality of character embedding (default: 128)")
+#tf.flags.DEFINE_integer ("embedding_dim", 128, "Dimensionality of character embedding (default: 128)")
+# 使用google word2vec pretrained model
+tf.flags.DEFINE_integer ("embedding_dim", 300, "Dimensionality of character embedding (default: 300)")
 tf.flags.DEFINE_string ("filter_sizes", "3,4,5", "Comma-separated filter sizes (default: '3,4,5')")
 
 # 定义卷积核的个数为128个
@@ -53,7 +55,7 @@ def preprocess ():
 	print ("Loading data...")
 	# 加载数据，分为正样本负样本，x_test是一段文本
 	x_text, y = util.data_helpers.load_data_and_labels (FLAGS.positive_data_file, FLAGS.negative_data_file)
-
+	print("len(x_text:)",len(x_text))#len(x_text:) 10662
 	# Build vocabulary
 	max_document_length = max ([len (x.split (" ")) for x in x_text])#句子最大的长度，每一个为本使用56维向量表示
 
@@ -61,13 +63,25 @@ def preprocess ():
 
 	# 先生成list，然后转为numpy array
 	# (10662, 56):10662是文本的数目（行数），每一行使用56维向量表示
-	x = np.array (list (vocab_processor.fit_transform (x_text)))
+	# x_text_transformed=vocab_processor.fit_transform(x_text)
+	#
+	# x = np.array (list (x_text_transformed))
+	# print ("x.shape:", x.shape)#x.shape: (10662, 56)
+
+	# 使用word2vec，在网络中不进行embedding操作。
+	if os.path.exists(filepath.rt_polarity_pickle):
+		print("load rt_polarity.pkl...")
+		x=np.load(filepath.rt_polarity_pickle)
+	else:
+		x=util.process_data.doc_to_vec()
 
 	# Randomly shuffle data
 	np.random.seed (10)
 	shuffle_indices = np.random.permutation (np.arange (len (y)))
 	x_shuffled = x [shuffle_indices]
 	y_shuffled = y [shuffle_indices]
+
+
 
 	# Split train/test set
 	# TODO:如何使用交叉验证
@@ -80,6 +94,7 @@ def preprocess ():
 
 	print ("Vocabulary Size: {:d}".format (len (vocab_processor.vocabulary_)))
 	print ("Train/Dev split: {:d}/{:d}".format (len (y_train), len (y_dev)))
+
 	return x_train, y_train, vocab_processor, x_dev, y_dev
 
 
